@@ -14,6 +14,7 @@ import MobilePageContainer from '../atoms/MobilePageContainer'
 import GeneralPreferencesTab from './GeneralPreferencesTab'
 import EditorPreferencesTab from './EditorPreferencesTab'
 import BillingTab from '../../../components/PreferencesModal/BillingTab'
+import ExportTab from '../../../components/PreferencesModal/ExportTab'
 
 const PreferencesModalContainer = styled.div`
   z-index: 7000;
@@ -29,7 +30,7 @@ const PreferencesModalContainer = styled.div`
 
 const PreferencesModal = () => {
   const { closed, toggleClosed } = usePreferences()
-  const [tab, setTab] = useState<null | 'general' | 'editor' | 'billing'>(null)
+  const [tab, setTab] = useState<null | 'general' | 'editor' | 'billing' | 'export'>(null)
 
   const unselectTab = useCallback(() => {
     setTab(null)
@@ -45,6 +46,10 @@ const PreferencesModal = () => {
 
   const selectBillingTab = useCallback(() => {
     setTab('billing')
+  }, [])
+
+  const selectExportTab = useCallback(() => {
+    setTab('export')
   }, [])
 
   if (closed) {
@@ -86,6 +91,9 @@ const PreferencesModal = () => {
         <TableViewCell iconPath={mdiChevronRight} onClick={selectBillingTab}>
           Billing
         </TableViewCell>
+        <TableViewCell iconPath={mdiChevronRight} onClick={selectExportTab}>
+          Export
+        </TableViewCell>
         <TableViewLabel>External links</TableViewLabel>
         <ExternalLinkTableViewCell url='https://github.com/BoostIO/Boostnote.next'>
           Github Repository
@@ -113,12 +121,14 @@ const PreferencesModal = () => {
   )
 }
 
-function getTab(tab: 'general' | 'editor' | 'billing') {
+function getTab(tab: 'general' | 'editor' | 'billing' | 'export') {
   switch (tab) {
     case 'editor':
       return <EditorPreferencesTab />
     case 'billing':
       return <BillingTab />
+    case 'export':
+      return <ExportTab />
     default:
     case 'general':
       return <GeneralPreferencesTab />

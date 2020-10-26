@@ -94,3 +94,42 @@ export const exportNoteAsMarkdownFile = async (
     })
   return
 }
+
+
+export const prepareNoteAsMarkdownFile = async (
+  note: NoteDoc,
+  { includeFrontMatter }: { includeFrontMatter: boolean },
+  contentCallback: (content : string, filename : string, type : string) => void = (c, f, t) => console.log(c, f, t)
+): Promise<void> => {
+  await unified()
+    .use(remarkParse)
+    .use(remarkStringify)
+    .process(note.content, (err, file) => {
+      if (err != null) {
+        /* TODO: Toast error */
+        console.error(err)
+        return
+      }
+      let content = file.toString().trim() + '\n'
+      if (includeFrontMatter) {
+        content =
+          [
+            '---',
+            `title: "${note.title}"`,
+            `tags: "${note.tags.join()}"`,
+            '---',
+            '',
+            '',
+          ].join('\n') + content
+      }
+
+      // Call content callback
+      const filename = `${note.folderPathname}/${filenamify(note.title.toLowerCase().replace(/\s+/g, '-'))}.md`
+      if (contentCallback !== undefined) {
+        contentCallback(content, filename, 'text/markdown')
+      }
+      return
+    })
+  return
+}
+

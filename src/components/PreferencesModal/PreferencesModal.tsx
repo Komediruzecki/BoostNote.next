@@ -8,6 +8,7 @@ import EditorTab from './EditorTab'
 import MarkdownTab from './MarkdownTab'
 import AboutTab from './AboutTab'
 import BillingTab from './BillingTab'
+import ExportTab from './ExportTab'
 import {
   backgroundColor,
   closeIconColor,
@@ -120,6 +121,8 @@ const PreferencesModal = () => {
         return <AboutTab />
       case 'billing':
         return <BillingTab />
+      case 'export':
+        return <ExportTab />
       case 'general':
       default:
         return <GeneralTab />
@@ -172,6 +175,12 @@ const PreferencesModal = () => {
               label='Billing'
               tab='billing'
               active={tab === 'billing'}
+              setTab={setTab}
+            />
+            <TabButton
+              label='Export'
+              tab='export'
+              active={tab === 'export'}
               setTab={setTab}
             />
           </TabNav>

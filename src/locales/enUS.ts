@@ -115,6 +115,10 @@ export default {
       '* If you need more cloud storage, you can add it at any time by paying $5 (USD) for every 5GB. Click the "Add Extra Storage" button below.',
     'billing.addStorage': 'Add Extra Storage',
 
+    // Storage export translations
+    'export.title': 'Storage Export',
+    'export.message': 'Here you can export your storages/notes',
+
     // Preferences
     'preferences.general': 'Preferences',
 
