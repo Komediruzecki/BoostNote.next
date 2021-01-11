@@ -21,6 +21,7 @@ import BoostHubLoginPage from './pages/BoostHubLoginPage'
 import { ObjectMap, NoteStorage } from '../lib/db/types'
 import { useGeneralStatus } from '../lib/generalStatus'
 import { openContextMenu } from '../lib/electronOnly'
+import NoteSubWindowPage from './pages/NoteSubWindowPage'
 
 const NotFoundPageContainer = styled.div`
   padding: 15px 25px;
@@ -113,6 +114,7 @@ function useContent(
   storageMap: ObjectMap<NoteStorage>
 ) {
   const { preferences, setPreferences } = usePreferences()
+  // console.log('Loading', routeParams, routeParams.name)
   switch (routeParams.name) {
     case 'boosthub.login':
       return <BoostHubLoginPage />
@@ -132,6 +134,14 @@ function useContent(
       }
 
       return <WikiNotePage storage={storage} />
+    }
+    case 'storages.notes.subWindow': {
+      const { storageId } = routeParams
+      const storage = storageMap[storageId]
+      if (storage == null) {
+        break
+      }
+      return <NoteSubWindowPage storage={storage} />
     }
     case 'storages.attachments': {
       const { storageId } = routeParams

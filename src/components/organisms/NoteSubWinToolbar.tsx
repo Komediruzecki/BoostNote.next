@@ -9,22 +9,20 @@ import {
   mdiPencil,
   mdiChevronRight,
   mdiChevronLeft,
-  mdiOpenInNew,
+  mdiClose,
 } from '@mdi/js'
 import { borderBottom, flexCenter } from '../../lib/styled/styleFunctions'
 import ToolbarIconButton from '../atoms/ToolbarIconButton'
 import { useGeneralStatus } from '../../lib/generalStatus'
-import NotePageToolbarNoteHeader from '../molecules/NotePageToolbarNoteHeader'
 import {
-  exportNoteAsHtmlFile,
-  exportNoteAsMarkdownFile,
+  convertNoteDocToHtmlString,
+  convertNoteDocToMarkdownString,
   convertNoteDocToPdfBuffer,
 } from '../../lib/exports'
 import { usePreferences } from '../../lib/preferences'
 import { usePreviewStyle } from '../../lib/preview'
 import { useTranslation } from 'react-i18next'
 import { useDb } from '../../lib/db'
-import { useRouteParams } from '../../lib/routeParams'
 import { useToast } from '../../lib/toast'
 import {
   openContextMenu,
@@ -33,11 +31,14 @@ import {
   addIpcListener,
   removeIpcListener,
   writeFile,
+  closeCurrentWindow,
 } from '../../lib/electronOnly'
-import NotePageToolbarFolderHeader from '../molecules/NotePageToolbarFolderHeader'
 import path from 'path'
 import pathParse from 'path-parse'
 import { filenamify } from '../../lib/string'
+import NotePageToolbarNoteHeader from '../molecules/NotePageToolbarNoteHeader'
+import { useRouteParams } from '../../lib/routeParams'
+import NotePageToolbarFolderHeader from '../molecules/NotePageToolbarFolderHeader'
 
 const Container = styled.div`
   display: flex;
@@ -53,6 +54,11 @@ const Container = styled.div`
     display: flex;
     align-items: center;
     overflow: hidden;
+    -webkit-app-region: drag;
+  }
+
+  & > .right {
+    -webkit-app-region: no-drag;
   }
 `
 
@@ -60,17 +66,13 @@ const Control = styled.div`
   ${flexCenter}
 `
 
-interface NotePageToolbarProps {
+interface NoteSubWinPageToolbarProps {
   storage: NoteStorage
   note?: NoteDoc
   openInNewWindow?: () => void
 }
 
-const NotePageToolbar = ({
-  storage,
-  note,
-  openInNewWindow,
-}: NotePageToolbarProps) => {
+const NoteSubWinToolbar = ({ storage, note }: NoteSubWinPageToolbarProps) => {
   const { t } = useTranslation()
   const { bookmarkNote, unbookmarkNote } = useDb()
   const { setPreferences, preferences } = usePreferences()
@@ -99,6 +101,20 @@ const NotePageToolbar = ({
     }
     await unbookmarkNote(storageId, noteId)
   }, [storageId, noteId, unbookmarkNote])
+
+  const getAttachmentData = useCallback(
+    async (src: string) => {
+      if (note == null) {
+        return
+      }
+      if (storage.attachmentMap[src] != undefined) {
+        return storage.attachmentMap[src]?.getData()
+      } else {
+        return Promise.reject('Attachment not in map.')
+      }
+    },
+    [note, storage.attachmentMap]
+  )
 
   const selectEditMode = useCallback(() => {
     setGeneralStatus({
@@ -195,31 +211,25 @@ const NotePageToolbar = ({
         const parsedFilePath = pathParse(result.filePath)
         switch (parsedFilePath.ext) {
           case '.html':
-            await exportNoteAsHtmlFile(
-              parsedFilePath.dir,
-              parsedFilePath.name,
+            const htmlString = await convertNoteDocToHtmlString(
               note,
-              preferences['markdown.codeBlockTheme'],
-              preferences['general.theme'],
+              preferences,
               pushMessage,
-              storage.attachmentMap,
+              getAttachmentData,
               previewStyle
             )
-            pushMessage({
-              title: 'HTML export',
-              description: 'HTML file exported successfully.',
-            })
+            await writeFile(result.filePath, htmlString)
             return
           case '.pdf':
             try {
               const pdfBuffer = await convertNoteDocToPdfBuffer(
                 note,
-                preferences['markdown.codeBlockTheme'],
-                preferences['general.theme'],
+                preferences,
                 pushMessage,
-                storage.attachmentMap,
+                getAttachmentData,
                 previewStyle
               )
+
               await writeFile(result.filePath, pdfBuffer)
             } catch (error) {
               console.error(error)
@@ -231,17 +241,11 @@ const NotePageToolbar = ({
             return
           case '.md':
           default:
-            await exportNoteAsMarkdownFile(
-              parsedFilePath.dir,
-              parsedFilePath.name,
+            const markdownString = convertNoteDocToMarkdownString(
               note,
-              storage.attachmentMap,
               includeFrontMatter
             )
-            pushMessage({
-              title: 'Markdown export',
-              description: 'Markdown file exported successfully.',
-            })
+            await writeFile(result.filePath, markdownString)
             return
         }
       })
@@ -252,11 +256,11 @@ const NotePageToolbar = ({
     }
   }, [
     note,
+    getAttachmentData,
     includeFrontMatter,
     preferences,
     previewStyle,
     pushMessage,
-    storage.attachmentMap,
   ])
 
   const routeParams = useRouteParams()
@@ -322,7 +326,23 @@ const NotePageToolbar = ({
     })
   }, [setGeneralStatus])
 
+  const closeWindow = useCallback(() => {
+    closeCurrentWindow()
+  }, [])
+
   return (
+    // <TitleBar>
+    // <div className='title'>
+    //   {currentNote != null && currentNote.title
+    //        ? currentNote.title
+    //        : 'Untitled'}
+    //    </div>
+    //    <div className='title-bar-btns'>
+    //      <button className='min-btn'>-</button>
+    //      <button className='max-btn'>+</button>
+    //      <button className='close-btn'>x</button>
+    //    </div>
+    //  </TitleBar>
     <Container>
       <div className='left'>
         {note == null ? (
@@ -334,15 +354,18 @@ const NotePageToolbar = ({
           <NotePageToolbarNoteHeader
             storageId={storageId}
             storageName={storageName}
-            noteId={note?._id}
-            noteTitle={note?.title}
+            noteId={note._id}
+            noteTitle={note.title}
             noteFolderPathname={folderPathname}
           />
         )}
       </div>
 
       {note != null && (
-        <Control onContextMenu={openTopbarSwitchSelectorContextMenu}>
+        <Control
+          className='right'
+          onContextMenu={openTopbarSwitchSelectorContextMenu}
+        >
           {editorControlMode === '3-buttons' ? (
             <>
               <ToolbarIconButton
@@ -396,13 +419,9 @@ const NotePageToolbar = ({
             iconPath={note.data.bookmarked ? mdiStar : mdiStarOutline}
           />
           <ToolbarIconButton
-            title={t('note.openInNewWindow')}
-            iconPath={mdiOpenInNew}
-            onClick={
-              openInNewWindow
-                ? openInNewWindow
-                : () => console.warn('Open in new window not implemented!')
-            }
+            title='Close Window'
+            onClick={closeWindow}
+            iconPath={mdiClose}
           />
           <ToolbarIconButton
             active={generalStatus.showingNoteContextMenu}
@@ -420,4 +439,27 @@ const NotePageToolbar = ({
   )
 }
 
-export default NotePageToolbar
+// const TitleBar = styled.div`
+//   .title-bar {
+//     -webkit-app-region: drag;
+//     height: 24px;
+//     background-color: darkviolet;
+//     padding: 0;
+//     margin: 0px;
+//   }
+//
+//   .title {
+//     position: fixed;
+//     top: 0px;
+//     left: 6px;
+//   }
+//
+//   .title-bar-btns {
+//     -webkit-app-region: no-drag;
+//     position: fixed;
+//     top: 0px;
+//     right: 6px;
+//   }
+// `
+
+export default NoteSubWinToolbar

@@ -90,6 +90,8 @@ export default {
     'note.preview': 'Preview',
     'note.trash': 'Trash',
     'note.export': 'Export',
+    'note.openInNewWindow': 'Open in new window',
+    'note.createNew': 'Create new note',
 
     //Bookmark
     'bookmark.remove': 'Remove Bookmark',

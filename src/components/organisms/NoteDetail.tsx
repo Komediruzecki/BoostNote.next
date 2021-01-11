@@ -38,6 +38,7 @@ type NoteDetailProps = {
   viewMode: ViewModeType
   initialCursorPosition: EditorPosition
   addAttachments(storageId: string, files: File[]): Promise<Attachment[]>
+  noteSavePeriod?: number
 }
 
 type NoteDetailState = {
@@ -50,6 +51,8 @@ type NoteDetailState = {
     anchor: EditorPosition
   }[]
 }
+
+const DEFAULT_NOTE_SAVE_PERIOD_MS = 3000
 
 class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
   state: NoteDetailState = {
@@ -140,6 +143,7 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
     addIpcListener('focus-editor', this.focusOnEditor)
     addIpcListener('apply-bold-style', this.applyBoldStyle)
     addIpcListener('apply-italic-style', this.applyItalicStyle)
+    addIpcListener('update-note-from-main-window', this.updateNoteFromSubWindow)
   }
 
   componentWillUnmount() {
@@ -152,6 +156,10 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
     removeIpcListener('focus-editor', this.focusOnEditor)
     removeIpcListener('apply-bold-style', this.applyBoldStyle)
     removeIpcListener('apply-italic-style', this.applyItalicStyle)
+    removeIpcListener(
+      'update-note-from-main-window',
+      this.updateNoteFromSubWindow
+    )
   }
 
   updateContent = (
@@ -192,14 +200,19 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
     if (this.timer != null) {
       clearTimeout(this.timer)
     }
-    this.timer = setTimeout(() => {
-      const { note, storage } = this.props
-      const { content } = this.state
+    this.timer = setTimeout(
+      () => {
+        const { note, storage } = this.props
+        const { content } = this.state
 
-      this.saveNote(storage.id, note._id, {
-        content,
-      })
-    }, 3000)
+        this.saveNote(storage.id, note._id, {
+          content,
+        })
+      },
+      this.props.noteSavePeriod
+        ? this.props.noteSavePeriod
+        : DEFAULT_NOTE_SAVE_PERIOD_MS
+    )
   }
 
   async saveNote(
@@ -301,7 +314,6 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
     const doc = codeMirror.getDoc()
     const { line, ch } = doc.getCursor()
     const selections = doc.listSelections()
-
     this.setState({
       currentCursor: {
         line,
@@ -309,6 +321,9 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
       },
       currentSelections: selections,
     })
+
+    // codeMirror.focus()
+    console.log('Cursor activity!', line)
   }
 
   applyBoldStyle = () => {
@@ -317,6 +332,7 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
       return
     }
     if (!codeMirror.hasFocus()) {
+      console.log('No focus')
       return
     }
     this.format('bold')
@@ -438,6 +454,27 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
     )
   }
 
+  updateNoteFromSubWindow = (_: any, args: any[]) => {
+    if (args.length != 3) {
+      return
+    }
+    const { note, storage } = this.props
+    if (storage == null || note == null) {
+      return
+    }
+    const storageId = args[0]
+    const noteId = args[1]
+    const noteProps = args[2]
+    // console.log('Updating note to', noteProps, this.state)
+    if (storageId == storage.id && noteId == note._id) {
+      this.updateContent(noteProps.content)
+      // updateNote(storageId, noteId, noteProps)
+    } else {
+      console.warn('Updating note outside of this element')
+      // updateNote(storageId, noteId, noteProps)
+    }
+  }
+
   render() {
     const { note, storage, viewMode, initialCursorPosition } = this.props
     const { currentCursor, currentSelections } = this.state
@@ -500,7 +537,7 @@ const Container = styled.div`
   height: 100%;
   & > .bottomBar {
     display: flex;
-    ${borderTop}
+    ${borderTop};
     height: 24px;
     & > :first-child {
       flex: 1;

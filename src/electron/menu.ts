@@ -281,6 +281,12 @@ export const template: MenuItemConstructorOptions[] = [
     submenu: [
       { role: 'minimize' },
       { role: 'zoom' },
+      { type: 'separator' },
+      {
+        type: 'normal',
+        label: 'Float Selected Note',
+        click: createEmitIpcMenuItemHandler('open-note-in-new-window'),
+      },
       ...(mac
         ? [
             { type: 'separator' },

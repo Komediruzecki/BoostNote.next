@@ -57,8 +57,8 @@ const FoldButton = styled.button`
     color: ${({ theme }) => theme.navButtonActiveColor};
   }
 `
-
-const ClickableContainer = styled.button`
+// todo: [komediruzecki-06/03/2021] Bugfix, button inside button
+const ClickableContainer = styled.div`
   background-color: transparent;
   height: 28px;
   border: none;

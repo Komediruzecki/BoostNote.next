@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react'
-import { NoteStorage } from '../../lib/db/types'
+import React, { useCallback, useEffect, useMemo } from 'react'
+import { NoteDocEditibleProps, NoteStorage } from '../../lib/db/types'
 import StorageLayout from '../atoms/StorageLayout'
 import NotePageToolbar from '../organisms/NotePageToolbar'
 import NoteDetail from '../organisms/NoteDetail'
@@ -22,6 +22,11 @@ import { parseNumberStringOrReturnZero } from '../../lib/string'
 import NoteContextView from '../organisms/NoteContextView'
 import CloudIntroModal from '../organisms/CloudIntroModal'
 import { useCloudIntroModal } from '../../lib/cloudIntroModal'
+import {
+  addIpcListener,
+  openNewSubWindow,
+  removeIpcListener,
+} from '../../lib/electronOnly'
 
 interface WikiNotePageProps {
   storage: NoteStorage
@@ -102,6 +107,40 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
     }
   }, [hash])
 
+  const updateAndNotifyOtherWindows = useCallback(
+    (
+      storageId: string,
+      noteId: string,
+      noteProps: Partial<NoteDocEditibleProps>
+    ) => {
+      const { ipcRenderer } = window.require('electron')
+      ipcRenderer.send('notify-note-update', [storageId, noteId, noteProps])
+      return updateNote(storageId, noteId, noteProps)
+    },
+    [updateNote]
+  )
+
+  const openInNewWindowHandler = useCallback(() => {
+    if (note == null) {
+      return
+    }
+
+    openNewSubWindow(
+      { title: note.title ? note.title : 'Untitled' },
+      {
+        storageId: storage.id,
+        noteId: note._id,
+      }
+    )
+  }, [note, storage.id])
+
+  useEffect(() => {
+    addIpcListener('open-note-in-new-window', openInNewWindowHandler)
+    return () => {
+      removeIpcListener('open-note-in-new-window', openInNewWindowHandler)
+    }
+  }, [openInNewWindowHandler])
+
   return (
     <StorageLayout storage={storage}>
       {showSearchModal && <SearchModal storage={storage} />}
@@ -111,7 +150,11 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
             note != null && generalStatus.showingNoteContextMenu ? '' : 'expand'
           }
         >
-          <NotePageToolbar note={note} storage={storage} />
+          <NotePageToolbar
+            note={note}
+            storage={storage}
+            openInNewWindow={openInNewWindowHandler}
+          />
           <div className='detail'>
             {note == null ? (
               routeParams.name === 'storages.notes' ? (
@@ -130,7 +173,7 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
               <NoteDetail
                 note={note}
                 storage={storage}
-                updateNote={updateNote}
+                updateNote={updateAndNotifyOtherWindows}
                 addAttachments={addAttachments}
                 viewMode={noteViewMode}
                 initialCursorPosition={getCurrentPositionFromRoute()}

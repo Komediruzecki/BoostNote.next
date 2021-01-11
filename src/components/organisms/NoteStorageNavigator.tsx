@@ -288,7 +288,7 @@ const NoteStorageNavigator = ({ storage }: NoteStorageNavigatorProps) => {
         <div className='label'>Search</div>
         <div className='kbd'>{osName === 'macos' ? '⌘P' : 'Ctrl P'}</div>
       </SearchButton>
-      <NewNoteButton onClick={createNoteByRoute}>
+      <NewNoteButton onClick={createNoteByRoute} title={t('note.createNew')}>
         <div className='icon'>
           <Icon path={mdiPlus} />
         </div>

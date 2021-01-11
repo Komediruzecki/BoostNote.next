@@ -64,6 +64,8 @@ export interface Preferences {
   'editor.indentSize': EditorIndentSizeOptions
   'editor.keyMap': EditorKeyMapOptions
   'editor.controlMode': EditorControlModeOptions
+  'editor.maxSubEditors': number
+  'editor.removeSubWindowNotes': boolean
 
   // Markdown
   'markdown.previewStyle': string
@@ -112,6 +114,8 @@ const basePreferences: Preferences = {
   'editor.indentType': 'spaces',
   'editor.indentSize': 4,
   'editor.keyMap': 'default',
+  'editor.maxSubEditors': 3,
+  'editor.removeSubWindowNotes': true,
 
   // Markdown
   'markdown.previewStyle': 'default',

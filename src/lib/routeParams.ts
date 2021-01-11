@@ -16,6 +16,12 @@ export interface StorageNotesRouteParams extends BaseRouteParams {
   noteId?: string
 }
 
+export interface StorageNotesInSubWindowParams extends BaseRouteParams {
+  name: 'storages.notes.subWindow'
+  storageId: string
+  noteId?: string
+}
+
 export interface StorageTrashCanRouteParams extends BaseRouteParams {
   name: 'storages.trashCan'
   storageId: string
@@ -61,6 +67,7 @@ export type AllRouteParams =
   | StorageTrashCanRouteParams
   | StorageTagsRouteParams
   | StorageAttachmentsRouteParams
+  | StorageNotesInSubWindowParams
   | UnknownRouteParams
   | BoostHubTeamsShowRouteParams
   | BoostHubTeamsCreateRouteParams
@@ -118,6 +125,35 @@ export const useRouteParams = () => {
         name: 'storages.notes',
         storageId,
         folderPathname: '/',
+      }
+    }
+
+    // todo: [komediruzecki-01/03/2021] We should add storages.notes.subWindow here and set appropriate name
+    // console.log('Got sub window note', names)
+    if (names[2] === 'subWindowNote') {
+      const restNames = names.slice(3)
+      // const noteId: string | undefined = restNames[0]
+      let noteId
+
+      const folderNames = []
+      for (const name of restNames) {
+        if (name === '') {
+          break
+        }
+        if (/^note:/.test(name)) {
+          noteId = name
+          break
+        }
+        folderNames.push(name)
+      }
+
+      // console.log('Got', noteId, storageId, restNames, folderNames)
+      if (noteId != null) {
+        return {
+          name: 'storages.notes.subWindow',
+          storageId,
+          noteId,
+        }
       }
     }
 

@@ -351,6 +351,55 @@ const App = () => {
     toggleShowCreateWorkspaceModal,
   } = useCreateWorkspaceModal()
 
+  const [subWindowNote, setSubWindowNote] = useState(false)
+  const toggleSubWindowNote = useCallback(
+    (_event: any, data) => {
+      const noteId = data[0]
+      const storageId = data[1]
+      // console.log('Got sub win note on', noteId, storageId)
+      setSubWindowNote((prevState) => !prevState)
+      if (!subWindowNote) {
+        push(`/app/storages/${storageId}/subWindowNote/${noteId}`)
+      }
+    },
+    [push, subWindowNote]
+  )
+
+  useEffect(() => {
+    addIpcListener('open-sub-window-note', toggleSubWindowNote)
+    return () => {
+      removeIpcListener('open-sub-window-note', toggleSubWindowNote)
+    }
+  }, [toggleSubWindowNote])
+
+  useEffect(() => {
+    addIpcListener('close-sub-window-note', toggleSubWindowNote)
+    return () => {
+      removeIpcListener('close-sub-window-note', toggleSubWindowNote)
+    }
+  }, [toggleSubWindowNote])
+
+  // console.log('Loading pathname', pathname)
+  if (subWindowNote || pathname === '/noteSubApp') {
+    return (
+      <ThemeProvider theme={selectTheme(preferences['general.theme'])}>
+        <AppContainer
+          onDrop={(event: React.DragEvent) => {
+            event.preventDefault()
+          }}
+        >
+          {initialized ? (
+            <Router />
+          ) : (
+            <LoadingText>Loading Data...</LoadingText>
+          )}
+          <GlobalStyle />
+          <CodeMirrorStyle />
+          <ExternalStyle />
+        </AppContainer>
+      </ThemeProvider>
+    )
+  }
   return (
     <ThemeProvider theme={selectTheme(preferences['general.theme'])}>
       <AppContainer

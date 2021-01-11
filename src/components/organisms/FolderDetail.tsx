@@ -21,6 +21,7 @@ interface FolderDetailProps {
   folderPathname: string
 }
 
+// todo: [komediruzecki-05/03/2021] Here we can filter out notes in subwindows - as in WikiNotePage
 const FolderDetail = ({ storage, folderPathname }: FolderDetailProps) => {
   const { preferences, setPreferences } = usePreferences()
   const noteSorting = preferences['general.noteSorting']

@@ -36,6 +36,11 @@ const __ELECTRON_ONLY__: {
   parseCSON(value: string): JsonValue
   stringifyCSON(value: any): string
   openNewWindow(options: BrowserWindowConstructorOptions): BrowserWindow
+  openNewSubWindow(
+    options: BrowserWindowConstructorOptions,
+    loadOptions: { storageId: string; noteId: string }
+  ): BrowserWindow
+  closeCurrentWindow(): void
   openContextMenu(options: { menuItems: MenuItemConstructorOptions[] }): void
   getPathByName(name: string): string
   addIpcListener(
@@ -77,6 +82,8 @@ const {
   parseCSON,
   stringifyCSON,
   openNewWindow,
+  openNewSubWindow,
+  closeCurrentWindow,
   openContextMenu,
   getPathByName,
   addIpcListener,
@@ -134,6 +141,8 @@ export {
   parseCSON,
   stringifyCSON,
   openNewWindow,
+  openNewSubWindow,
+  closeCurrentWindow,
   openContextMenu,
   getPathByName,
   addIpcListener,

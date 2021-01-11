@@ -27,7 +27,7 @@ const Container = styled.div`
   overflow: hidden;
 `
 
-const Pane = styled.div`
+export const Pane = styled.div`
   position: absolute;
   top: 0;
   bottom: 0;

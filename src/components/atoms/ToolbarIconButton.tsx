@@ -12,7 +12,7 @@ const Container = styled.button`
   padding: 0 5px;
 
   background-color: transparent;
-  ${flexCenter}
+  ${flexCenter};
 
   border: none;
   border-radius: 3px;
@@ -28,6 +28,8 @@ const Container = styled.button`
   &.active {
     color: ${({ theme }) => theme.navButtonActiveColor};
   }
+
+  -webkit-app-region: no-drag;
 `
 
 interface ToolbarButtonProps {

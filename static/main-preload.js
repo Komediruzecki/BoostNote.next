@@ -125,6 +125,14 @@
     return new electron.remote.BrowserWindow(options)
   }
 
+  function openNewSubWindow(options, loadOptions) {
+    electron.remote.ipcMain.emit('subWindowNote', [options, loadOptions])
+  }
+
+  function closeCurrentWindow() {
+    electron.remote.getCurrentWindow().close()
+  }
+
   function openContextMenu(options) {
     const { Menu } = electron.remote
     const menu = Menu.buildFromTemplate(options.menuItems)
@@ -231,6 +239,8 @@
   window.__ELECTRON_ONLY__.parseCSON = parseCSON
   window.__ELECTRON_ONLY__.stringifyCSON = stringifyCSON
   window.__ELECTRON_ONLY__.openNewWindow = openNewWindow
+  window.__ELECTRON_ONLY__.openNewSubWindow = openNewSubWindow
+  window.__ELECTRON_ONLY__.closeCurrentWindow = closeCurrentWindow
   window.__ELECTRON_ONLY__.openContextMenu = openContextMenu
   window.__ELECTRON_ONLY__.getPathByName = getPathByName
   window.__ELECTRON_ONLY__.addIpcListener = addIpcListener
@@ -239,7 +249,7 @@
   window.__ELECTRON_ONLY__.setAsDefaultProtocolClient = setAsDefaultProtocolClient
   window.__ELECTRON_ONLY__.removeAsDefaultProtocolClient = removeAsDefaultProtocolClient
   window.__ELECTRON_ONLY__.isDefaultProtocolClient = isDefaultProtocolClient
-  window.__ELECTRON_ONLY__.getWebContentsById
+  window.__ELECTRON_ONLY__.getWebContentsById = getWebContentsById
   window.__ELECTRON_ONLY__.setTrafficLightPosition = setTrafficLightPosition
   window.__ELECTRON_ONLY__.convertHtmlStringToPdfBuffer = convertHtmlStringToPdfBuffer
   window.__ELECTRON_ONLY__.setCookie = setCookie
