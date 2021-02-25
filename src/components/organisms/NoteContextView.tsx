@@ -189,7 +189,7 @@ const NoteContextView = ({ storage, note }: NoteContextViewProps) => {
 
       <Separator />
 
-      <ControlItem>
+      <ControlItemLabels>
         <ControlItemLabel>
           <LabelIcon path={mdiLabelMultipleOutline} />
           Labels
@@ -204,7 +204,7 @@ const NoteContextView = ({ storage, note }: NoteContextViewProps) => {
             updateTagColorByName={updateTagColorByName}
           />
         </ControlItemContent>
-      </ControlItem>
+      </ControlItemLabels>
 
       <Separator />
 
@@ -268,13 +268,16 @@ const Separator = styled.div`
   flex-shrink: 0;
 `
 
-const ControlItem = styled.div`
+const ControlItemLabels = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  height: 30px;
   color: ${({ theme }) => theme.navItemColor};
   font-size: 14px;
+`
+
+const ControlItem = styled(ControlItemLabels)`
+  height: 30px;
 `
 
 const ControlItemLabelIconContainer = styled.div`
