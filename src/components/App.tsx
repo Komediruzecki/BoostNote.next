@@ -379,8 +379,12 @@ const App = () => {
     }
   }, [toggleSubWindowNote])
 
-  // console.log('Loading pathname', pathname)
-  if (subWindowNote || pathname === '/noteSubApp') {
+  // console.log('Loading pathname', pathname, routeParams.name, routeParams, hash)
+  if (
+    subWindowNote ||
+    pathname === '/noteApp' ||
+    routeParams.name == 'storages.notes.subWindow'
+  ) {
     return (
       <ThemeProvider theme={selectTheme(preferences['general.theme'])}>
         <AppContainer

@@ -7,6 +7,7 @@ import ToolbarButton from '../atoms/ToolbarButton'
 interface NotePageToolbarFolderHeaderProps {
   storageId: string
   folderPathname: string
+  active: boolean
 }
 
 interface FolderData {
@@ -17,6 +18,7 @@ interface FolderData {
 const NotePageToolbarFolderHeader = ({
   storageId,
   folderPathname,
+  active = true,
 }: NotePageToolbarFolderHeaderProps) => {
   const { push } = useRouter()
 
@@ -38,7 +40,15 @@ const NotePageToolbarFolderHeader = ({
   }, [folderPathname])
 
   const navigateToWorkspace = () => {
-    push(`/app/storages/${storageId}/notes`)
+    if (active) {
+      push(`/app/storages/${storageId}/notes`)
+    }
+  }
+
+  const navigateToPathname = (pathname: string) => {
+    if (active) {
+      push(`/app/storages/${storageId}/notes${pathname}`)
+    }
   }
   return (
     <>
@@ -54,9 +64,7 @@ const NotePageToolbarFolderHeader = ({
             <ToolbarButton
               key={pathname}
               iconPath={mdiFolderOutline}
-              onClick={() => {
-                push(`/app/storages/${storageId}/notes${pathname}`)
-              }}
+              onClick={() => navigateToPathname(pathname)}
               label={name}
               limitWidth={index !== folderDataList.length - 1}
             />

@@ -168,25 +168,25 @@ app.on('ready', () => {
       title: browserOptions.title,
       show: false,
       // parent: undefined,
-      frame: false,
+      frame: true,
     }
     if (process.platform === 'darwin') {
       windowOptions.titleBarStyle = 'hidden'
     }
     const subWindow = new BrowserWindow(windowOptions)
-    if (!dev) {
-      subWindow.setMenu(Menu.buildFromTemplate([]))
-    }
+    // if (!dev) {
+    // subWindow.setMenu(Menu.buildFromTemplate([]))
+    // }
 
     if (dev) {
       // console.log('Opening sub window note', noteId, storageId)
-      subWindow.loadURL(`http://localhost:3000/app#noteSubApp`)
+      subWindow.loadURL(`http://localhost:3000/app#noteApp`)
     } else {
       subWindow.loadURL(
         url.format({
           pathname: path.join(
             app.getAppPath(),
-            './compiled/index.html#noteSubApp'
+            './compiled/index.html#noteApp'
           ),
           protocol: 'file',
           slashes: true,

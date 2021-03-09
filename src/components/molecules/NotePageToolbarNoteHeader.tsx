@@ -39,9 +39,10 @@ interface NotePageToolbarNoteHeaderProps {
   noteId: string
   noteFolderPathname: string
   noteTitle: string
+  active: boolean
 }
 
-interface FolderData {
+export interface FolderData {
   name: string
   pathname: string
 }
@@ -51,6 +52,7 @@ const NotePageToolbarNoteHeader = ({
   noteId,
   noteFolderPathname,
   noteTitle,
+  active = true,
 }: NotePageToolbarNoteHeaderProps) => {
   const { push } = useRouter()
   const { updateNote } = useDb()
@@ -73,16 +75,21 @@ const NotePageToolbarNoteHeader = ({
   }, [noteFolderPathname])
 
   const navigateToWorkspace = useCallback(() => {
-    push(`/app/storages/${storageId}/notes`)
-  }, [push, storageId])
+    if (active) {
+      push(`/app/storages/${storageId}/notes`)
+    }
+  }, [active, push, storageId])
 
   const [editingTitle, setEditingTitle] = useState(false)
   const [newTitle, setNewTitle] = useState(noteTitle)
   const titleInputRef = useRef<HTMLInputElement>(null)
   const startEditingTitle = useCallback(() => {
+    if (!active) {
+      return
+    }
     setNewTitle(noteTitle)
     setEditingTitle(true)
-  }, [noteTitle])
+  }, [active, noteTitle])
 
   useEffect(() => {
     setNewTitle(noteTitle)
@@ -242,7 +249,11 @@ const NotePageToolbarNoteHeader = ({
           placeholder='Title'
         />
       ) : (
-        <NoteTitleButton title={noteTitle} onClick={startEditingTitle} />
+        <NoteTitleButton
+          title={noteTitle}
+          onClick={startEditingTitle}
+          active={active}
+        />
       )}
     </>
   )
@@ -260,9 +271,10 @@ const TitleInput = styled.input`
 interface NoteTitleButtonProps {
   title?: string
   onClick: MouseEventHandler<HTMLButtonElement>
+  active: boolean
 }
 
-const NoteTitleButton = ({ title, onClick }: NoteTitleButtonProps) => {
+const NoteTitleButton = ({ title, onClick, active }: NoteTitleButtonProps) => {
   const titleIsEmpty = title == null || title.trim().length === 0
 
   return (
@@ -271,7 +283,7 @@ const NoteTitleButton = ({ title, onClick }: NoteTitleButtonProps) => {
       <div className={cc(['label', titleIsEmpty && 'empty'])}>
         {titleIsEmpty ? 'Untitled' : title}
       </div>
-      <Icon className='hoverIcon' path={mdiPencilOutline} />
+      {active && <Icon className='hoverIcon' path={mdiPencilOutline} />}
     </NoteTitleButtonContainer>
   )
 }

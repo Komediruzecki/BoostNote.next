@@ -128,7 +128,6 @@ export const useRouteParams = () => {
       }
     }
 
-    // todo: [komediruzecki-01/03/2021] We should add storages.notes.subWindow here and set appropriate name
     // console.log('Got sub window note', names)
     if (names[2] === 'subWindowNote') {
       const restNames = names.slice(3)

@@ -22,19 +22,8 @@ const NoteSubWindowPage = ({ storage }: NoteSubWindowPageProps) => {
   const routeParams = useRouteParams() as StorageNotesInSubWindowParams
   const { noteId } = routeParams
   const { hash } = useRouter()
-  // const currentPathnameWithoutNoteId = usePathnameWithoutNoteId()
   const { generalStatus } = useGeneralStatus()
   const noteViewMode = generalStatus.noteViewMode
-  // const { pushMessage } = useToast()
-
-  // const setNoteSorting = useCallback(
-  //   (noteSortingOption: NoteSortingOptions) => {
-  //     setPreferences({
-  //       'general.noteSorting': noteSortingOption,
-  //     })
-  //   },
-  //   [setPreferences]
-  // )
 
   const updateNoteAndReportToMainWindow = useCallback(
     async (

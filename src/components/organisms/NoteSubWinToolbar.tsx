@@ -9,7 +9,6 @@ import {
   mdiPencil,
   mdiChevronRight,
   mdiChevronLeft,
-  mdiClose,
 } from '@mdi/js'
 import { borderBottom, flexCenter } from '../../lib/styled/styleFunctions'
 import ToolbarIconButton from '../atoms/ToolbarIconButton'
@@ -31,14 +30,13 @@ import {
   addIpcListener,
   removeIpcListener,
   writeFile,
-  closeCurrentWindow,
 } from '../../lib/electronOnly'
 import path from 'path'
 import pathParse from 'path-parse'
 import { filenamify } from '../../lib/string'
-import NotePageToolbarNoteHeader from '../molecules/NotePageToolbarNoteHeader'
 import { useRouteParams } from '../../lib/routeParams'
 import NotePageToolbarFolderHeader from '../molecules/NotePageToolbarFolderHeader'
+import NotePageToolbarNoteHeader from '../molecules/NotePageToolbarNoteHeader'
 
 const Container = styled.div`
   display: flex;
@@ -326,9 +324,10 @@ const NoteSubWinToolbar = ({ storage, note }: NoteSubWinPageToolbarProps) => {
     })
   }, [setGeneralStatus])
 
-  const closeWindow = useCallback(() => {
-    closeCurrentWindow()
-  }, [])
+  // for closing frameless window
+  // const closeWindow = useCallback(() => {
+  //   closeCurrentWindow()
+  // }, [])
 
   return (
     // <TitleBar>
@@ -349,6 +348,7 @@ const NoteSubWinToolbar = ({ storage, note }: NoteSubWinPageToolbarProps) => {
           <NotePageToolbarFolderHeader
             storageId={storageId}
             folderPathname={folderPathname}
+            active={false}
           />
         ) : (
           <NotePageToolbarNoteHeader
@@ -357,6 +357,7 @@ const NoteSubWinToolbar = ({ storage, note }: NoteSubWinPageToolbarProps) => {
             noteId={note._id}
             noteTitle={note.title}
             noteFolderPathname={folderPathname}
+            active={false}
           />
         )}
       </div>
@@ -418,11 +419,12 @@ const NoteSubWinToolbar = ({ storage, note }: NoteSubWinPageToolbarProps) => {
             onClick={toggleBookmark}
             iconPath={note.data.bookmarked ? mdiStar : mdiStarOutline}
           />
-          <ToolbarIconButton
-            title='Close Window'
-            onClick={closeWindow}
-            iconPath={mdiClose}
-          />
+          {/* For closing frameless window */}
+          {/*<ToolbarIconButton*/}
+          {/*  title='Close Window'*/}
+          {/*  onClick={closeWindow}*/}
+          {/*  iconPath={mdiClose}*/}
+          {/*/>*/}
           <ToolbarIconButton
             active={generalStatus.showingNoteContextMenu}
             title='Open Context View'
