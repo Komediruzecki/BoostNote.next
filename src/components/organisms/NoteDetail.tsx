@@ -160,6 +160,8 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
       'update-note-from-main-window',
       this.updateNoteFromSubWindow
     )
+
+    console.log('unmounting note', this.state.prevNoteId)
   }
 
   updateContent = (

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { NoteDocEditibleProps, NoteStorage } from '../../lib/db/types'
 import StorageLayout from '../atoms/StorageLayout'
 import NotePageToolbar from '../organisms/NotePageToolbar'
@@ -41,6 +41,7 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
   const { generalStatus } = useGeneralStatus()
   const { showingCloudIntroModal } = useCloudIntroModal()
   const noteViewMode = generalStatus.noteViewMode
+  const [noteUpdated, setNoteUpdated] = useState(false)
 
   const note = useMemo(() => {
     switch (routeParams.name) {
@@ -140,6 +141,40 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
       removeIpcListener('open-note-in-new-window', openInNewWindowHandler)
     }
   }, [openInNewWindowHandler])
+  const updateNoteFromSubWindow = useCallback(
+    (_: any, args: any[]) => {
+      if (args.length != 3) {
+        return
+      }
+      if (storage == null || note == null) {
+        return
+      }
+      const storageId = args[0]
+      const noteId = args[1]
+      const noteProps = args[2]
+      // console.log('Updating note to', noteProps, this.state)
+
+      if (storageId == storage.id && noteId == note._id) {
+        // setNoteUpdated((prevState) => !prevState)
+        // note.content = noteProps.content
+        // this.updateContent(noteProps.content)
+        // updateNote(storageId, noteId, noteProps)
+      } else {
+        console.warn('Updating note outside of this element')
+        // setNoteUpdated((prevState) => !prevState)
+        // note.content = note.content + 'Hey'
+        // updateNote(storageId, noteId, noteProps)
+      }
+    },
+    [note, storage]
+  )
+
+  // useEffect(() => {
+  // addIpcListener('update-note-from-main-window', updateNoteFromSubWindow)
+  // return () => {
+  //   removeIpcListener('open-note-in-new-window', updateNoteFromSubWindow)
+  // }
+  // }, [updateNoteFromSubWindow])
 
   return (
     <StorageLayout storage={storage}>
@@ -171,6 +206,7 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
               )
             ) : (
               <NoteDetail
+                // key={noteUpdated + ''}
                 note={note}
                 storage={storage}
                 updateNote={updateAndNotifyOtherWindows}

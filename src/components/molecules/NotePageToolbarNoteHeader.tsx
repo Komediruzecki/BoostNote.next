@@ -39,7 +39,6 @@ interface NotePageToolbarNoteHeaderProps {
   noteId: string
   noteFolderPathname: string
   noteTitle: string
-  active: boolean
 }
 
 export interface FolderData {
@@ -52,7 +51,6 @@ const NotePageToolbarNoteHeader = ({
   noteId,
   noteFolderPathname,
   noteTitle,
-  active = true,
 }: NotePageToolbarNoteHeaderProps) => {
   const { push } = useRouter()
   const { updateNote } = useDb()
@@ -75,21 +73,16 @@ const NotePageToolbarNoteHeader = ({
   }, [noteFolderPathname])
 
   const navigateToWorkspace = useCallback(() => {
-    if (active) {
-      push(`/app/storages/${storageId}/notes`)
-    }
-  }, [active, push, storageId])
+    push(`/app/storages/${storageId}/notes`)
+  }, [push, storageId])
 
   const [editingTitle, setEditingTitle] = useState(false)
   const [newTitle, setNewTitle] = useState(noteTitle)
   const titleInputRef = useRef<HTMLInputElement>(null)
   const startEditingTitle = useCallback(() => {
-    if (!active) {
-      return
-    }
     setNewTitle(noteTitle)
     setEditingTitle(true)
-  }, [active, noteTitle])
+  }, [noteTitle])
 
   useEffect(() => {
     setNewTitle(noteTitle)
@@ -249,11 +242,7 @@ const NotePageToolbarNoteHeader = ({
           placeholder='Title'
         />
       ) : (
-        <NoteTitleButton
-          title={noteTitle}
-          onClick={startEditingTitle}
-          active={active}
-        />
+        <NoteTitleButton title={noteTitle} onClick={startEditingTitle} />
       )}
     </>
   )
@@ -271,10 +260,9 @@ const TitleInput = styled.input`
 interface NoteTitleButtonProps {
   title?: string
   onClick: MouseEventHandler<HTMLButtonElement>
-  active: boolean
 }
 
-const NoteTitleButton = ({ title, onClick, active }: NoteTitleButtonProps) => {
+const NoteTitleButton = ({ title, onClick }: NoteTitleButtonProps) => {
   const titleIsEmpty = title == null || title.trim().length === 0
 
   return (
@@ -283,7 +271,7 @@ const NoteTitleButton = ({ title, onClick, active }: NoteTitleButtonProps) => {
       <div className={cc(['label', titleIsEmpty && 'empty'])}>
         {titleIsEmpty ? 'Untitled' : title}
       </div>
-      {active && <Icon className='hoverIcon' path={mdiPencilOutline} />}
+      {<Icon className='hoverIcon' path={mdiPencilOutline} />}
     </NoteTitleButtonContainer>
   )
 }
