@@ -41,7 +41,7 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
   const { generalStatus } = useGeneralStatus()
   const { showingCloudIntroModal } = useCloudIntroModal()
   const noteViewMode = generalStatus.noteViewMode
-  const [noteUpdated, setNoteUpdated] = useState(false)
+  const [noteUpdated, setNoteUpdated] = useState(true)
 
   const note = useMemo(() => {
     switch (routeParams.name) {
@@ -135,12 +135,12 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
     )
   }, [note, storage.id])
 
-  useEffect(() => {
-    addIpcListener('open-note-in-new-window', openInNewWindowHandler)
-    return () => {
-      removeIpcListener('open-note-in-new-window', openInNewWindowHandler)
-    }
-  }, [openInNewWindowHandler])
+  // useEffect(() => {
+  //   addIpcListener('open-note-in-new-window', openInNewWindowHandler)
+  //   return () => {
+  //     removeIpcListener('open-note-in-new-window', openInNewWindowHandler)
+  //   }
+  // }, [openInNewWindowHandler])
   const updateNoteFromSubWindow = useCallback(
     (_: any, args: any[]) => {
       if (args.length != 3) {
@@ -175,6 +175,17 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
   //   removeIpcListener('open-note-in-new-window', updateNoteFromSubWindow)
   // }
   // }, [updateNoteFromSubWindow])
+
+  useEffect(() => {
+    if (note == null) {
+      return
+    }
+    console.log('After wiki page loaded', note._id)
+    // see if we have updated content
+    if (noteUpdated) {
+      console.log('Note is: ', storage.noteMap[note._id])
+    }
+  }, [note, noteUpdated, storage.noteMap])
 
   return (
     <StorageLayout storage={storage}>

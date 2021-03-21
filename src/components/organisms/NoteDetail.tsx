@@ -92,6 +92,7 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
     state: NoteDetailState
   ): NoteDetailState {
     const { note, storage } = props
+    console.log('GOt to new note', note._id)
     if (storage.id !== state.prevStorageId || note._id !== state.prevNoteId) {
       return {
         prevStorageId: storage.id,
@@ -121,6 +122,7 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
   }
 
   componentDidUpdate(_prevProps: NoteDetailProps, prevState: NoteDetailState) {
+    console.log('Component updating...')
     const { note } = this.props
     if (prevState.prevNoteId !== note._id) {
       if (this.queued) {
@@ -140,6 +142,7 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
   }
 
   componentDidMount() {
+    console.log('Mounting note', this.state.prevNoteId)
     addIpcListener('focus-editor', this.focusOnEditor)
     addIpcListener('apply-bold-style', this.applyBoldStyle)
     addIpcListener('apply-italic-style', this.applyItalicStyle)
@@ -222,6 +225,7 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
     noteId: string,
     { content }: { content: string }
   ) {
+    console.log('saving note...', noteId)
     clearTimeout(this.timer)
     this.queued = false
 
