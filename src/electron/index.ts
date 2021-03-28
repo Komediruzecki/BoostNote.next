@@ -154,6 +154,7 @@ app.on('ready', () => {
         webSecurity: !dev,
         webviewTag: true,
         enableRemoteModule: true,
+        contextIsolation: false,
         preload: dev
           ? path.join(app.getAppPath(), '../static/main-preload.js')
           : path.join(
@@ -174,13 +175,15 @@ app.on('ready', () => {
       windowOptions.titleBarStyle = 'hidden'
     }
     const subWindow = new BrowserWindow(windowOptions)
-    // if (!dev) {
-    // subWindow.setMenu(Menu.buildFromTemplate([]))
-    // }
+    if (!dev) {
+      subWindow.setMenu(Menu.buildFromTemplate([]))
+    }
 
     if (dev) {
       // console.log('Opening sub window note', noteId, storageId)
-      subWindow.loadURL(`http://localhost:3000/app#noteApp`)
+      subWindow.loadURL(`http://localhost:3000/app#noteApp`, {
+        userAgent: session.defaultSession.getUserAgent() + ` BoostNote`,
+      })
     } else {
       subWindow.loadURL(
         url.format({

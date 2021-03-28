@@ -87,7 +87,6 @@ const Router = () => {
   }, [push])
 
   useRedirect()
-
   return (
     <>
       {useContent(routeParams, storageMap)}
@@ -154,6 +153,7 @@ function useContent(
     case 'storages.create':
       return <StorageCreatePage />
   }
+
   return (
     <NotFoundPageContainer
       onContextMenu={

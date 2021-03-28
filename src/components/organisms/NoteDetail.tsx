@@ -477,7 +477,7 @@ class NoteDetail extends React.Component<NoteDetailProps, NoteDetailState> {
       // updateNote(storageId, noteId, noteProps)
     } else {
       console.warn('Updating note outside of this element')
-      // updateNote(storageId, noteId, noteProps)
+      // this.props.updateNote(storageId, noteId, noteProps)
     }
   }
 

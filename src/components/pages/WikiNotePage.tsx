@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { NoteDocEditibleProps, NoteStorage } from '../../lib/db/types'
 import StorageLayout from '../atoms/StorageLayout'
 import NotePageToolbar from '../organisms/NotePageToolbar'
@@ -22,11 +22,7 @@ import { parseNumberStringOrReturnZero } from '../../lib/string'
 import NoteContextView from '../organisms/NoteContextView'
 import CloudIntroModal from '../organisms/CloudIntroModal'
 import { useCloudIntroModal } from '../../lib/cloudIntroModal'
-import {
-  addIpcListener,
-  openNewSubWindow,
-  removeIpcListener,
-} from '../../lib/electronOnly'
+import { openNewSubWindow } from '../../lib/electronOnly'
 
 interface WikiNotePageProps {
   storage: NoteStorage
@@ -41,7 +37,7 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
   const { generalStatus } = useGeneralStatus()
   const { showingCloudIntroModal } = useCloudIntroModal()
   const noteViewMode = generalStatus.noteViewMode
-  const [noteUpdated, setNoteUpdated] = useState(true)
+  // const [noteUpdated] = useState(true)
 
   const note = useMemo(() => {
     switch (routeParams.name) {
@@ -141,51 +137,51 @@ const WikiNotePage = ({ storage }: WikiNotePageProps) => {
   //     removeIpcListener('open-note-in-new-window', openInNewWindowHandler)
   //   }
   // }, [openInNewWindowHandler])
-  const updateNoteFromSubWindow = useCallback(
-    (_: any, args: any[]) => {
-      if (args.length != 3) {
-        return
-      }
-      if (storage == null || note == null) {
-        return
-      }
-      const storageId = args[0]
-      const noteId = args[1]
-      const noteProps = args[2]
-      // console.log('Updating note to', noteProps, this.state)
-
-      if (storageId == storage.id && noteId == note._id) {
-        // setNoteUpdated((prevState) => !prevState)
-        // note.content = noteProps.content
-        // this.updateContent(noteProps.content)
-        // updateNote(storageId, noteId, noteProps)
-      } else {
-        console.warn('Updating note outside of this element')
-        // setNoteUpdated((prevState) => !prevState)
-        // note.content = note.content + 'Hey'
-        // updateNote(storageId, noteId, noteProps)
-      }
-    },
-    [note, storage]
-  )
-
+  // const updateNoteFromSubWindow = useCallback(
+  //   (_: any, args: any[]) => {
+  //     if (args.length != 3) {
+  //       return
+  //     }
+  //     if (storage == null || note == null) {
+  //       return
+  //     }
+  //     const storageId = args[0]
+  //     const noteId = args[1]
+  //     // const noteProps = args[2]
+  //     // console.log('Updating note to', noteProps, this.state)
+  //
+  //     if (storageId == storage.id && noteId == note._id) {
+  //       setNoteUpdated((prevState) => !prevState)
+  //       // note.content = noteProps.content
+  //       // this.updateContent(noteProps.content)
+  //       // updateNote(storageId, noteId, noteProps)
+  //     } else {
+  //       console.warn('Updating note outside of this element')
+  //       // setNoteUpdated((prevState) => !prevState)
+  //       // note.content = note.content + 'Hey'
+  //       // updateNote(storageId, noteId, noteProps)
+  //     }
+  //   },
+  //   [note, storage]
+  // )
+  //
   // useEffect(() => {
-  // addIpcListener('update-note-from-main-window', updateNoteFromSubWindow)
-  // return () => {
-  //   removeIpcListener('open-note-in-new-window', updateNoteFromSubWindow)
-  // }
+  //   addIpcListener('update-note-from-main-window', updateNoteFromSubWindow)
+  //   return () => {
+  //     removeIpcListener('open-note-in-new-window', updateNoteFromSubWindow)
+  //   }
   // }, [updateNoteFromSubWindow])
 
-  useEffect(() => {
-    if (note == null) {
-      return
-    }
-    console.log('After wiki page loaded', note._id)
-    // see if we have updated content
-    if (noteUpdated) {
-      console.log('Note is: ', storage.noteMap[note._id])
-    }
-  }, [note, noteUpdated, storage.noteMap])
+  // useEffect(() => {
+  //   if (note == null) {
+  //     return
+  //   }
+  //   console.log('After wiki page loaded', note._id)
+  //   // see if we have updated content
+  //   if (noteUpdated) {
+  //     console.log('Note is: ', storage.noteMap[note._id])
+  //   }
+  // }, [note, noteUpdated, storage.noteMap])
 
   return (
     <StorageLayout storage={storage}>
