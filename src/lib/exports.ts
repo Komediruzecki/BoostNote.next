@@ -36,6 +36,8 @@ import {
   remarkCharts,
   remarkPlantUML,
 } from '../cloud/lib/charts'
+import { FlowChartExport } from '../components/atoms/markdown/FlowChartExport'
+import { ChartExport } from '../components/atoms/markdown/ChartExport'
 
 interface ImageData {
   name: string
@@ -460,6 +462,15 @@ async function convertNoteDocToMarkdownHtmlString(
       createElement: React.createElement,
       components: {
         pre: CodeFence,
+        flowchart: ({ children }: any) => {
+          return FlowChartExport(children[0])
+        },
+        chart: ({ children }: any) => {
+          return ChartExport(children[0])
+        },
+        'chart(yaml)': ({ children }: any) => {
+          return ChartExport(children[0], true)
+        },
       },
     })
     .use(rehypeStringify)
