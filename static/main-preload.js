@@ -179,11 +179,11 @@
       const { BrowserWindow } = electron.remote
       const windowOptions = {
         webPreferences: {
-          nodeIntegration: false,
+          nodeIntegration: true,
           webSecurity: false,
-          javascript: false,
+          javascript: true,
         },
-        show: false,
+        show: true,
       }
       const browserWindow = new BrowserWindow(windowOptions)
       browserWindow.loadURL('data:text/html;charset=UTF-8,' + encodedStr)
@@ -197,7 +197,7 @@
         } catch (error) {
           reject(error)
         } finally {
-          browserWindow.destroy()
+          // browserWindow.destroy()
         }
       })
     })

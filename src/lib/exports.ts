@@ -6,7 +6,6 @@ import rehypeRaw from 'rehype-raw'
 import rehypeSanitize from 'rehype-sanitize'
 import rehypeStringify from 'rehype-stringify'
 import rehypeKatex from 'rehype-katex'
-import remarkAdmonitions from 'remark-admonitions'
 import { mergeDeepRight } from 'ramda'
 import gh from 'hast-util-sanitize/lib/github.json'
 import { rehypeCodeMirror } from '../components/atoms/MarkdownPreviewer'
@@ -32,12 +31,14 @@ import { join } from 'path'
 import { dev } from '../electron/consts'
 import { excludeFileProtocol } from './db/utils'
 import {
+  rehypeFlowChart,
   rehypeMermaid,
   remarkCharts,
   remarkPlantUML,
 } from '../cloud/lib/charts'
-import { FlowChartExport } from '../components/atoms/markdown/FlowChartExport'
-import { ChartExport } from '../components/atoms/markdown/ChartExport'
+import remarkSlug from 'remark-slug'
+import { rehypePosition } from '../cloud/lib/rehypePosition'
+import remarkAbmonitions from 'remark-admonitions'
 
 interface ImageData {
   name: string
@@ -60,7 +61,16 @@ const schema = mergeDeepRight(gh, {
     path: ['d'],
     svg: ['viewBox'],
   },
-  tagNames: [...gh.tagNames, 'svg', 'path', 'mermaid', 'iframe'],
+  tagNames: [
+    ...gh.tagNames,
+    'svg',
+    'path',
+    'mermaid',
+    'flowchart',
+    'chart',
+    'chart(yaml)',
+    'iframe',
+  ],
 })
 
 export async function openDialog(): Promise<string> {
@@ -442,41 +452,37 @@ async function convertNoteDocToMarkdownHtmlString(
     infima: false,
   }
 
-  const output = await unified()
+  const outputFinal = await unified()
     .use(remarkParse)
     .use(remarkEmoji, { emoticon: false })
-    .use(remarkAdmonitions, remarkAdmonitionOptions)
+    .use(remarkAbmonitions, remarkAdmonitionOptions)
     .use(remarkMath)
     .use(remarkPlantUML, { server: 'http://www.plantuml.com/plantuml' })
     .use(remarkCharts)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
-    .use(rehypeSanitize, schema)
-    .use(rehypeKatex, { output: 'htmlAndMathml' })
+    .use(remarkSlug)
+    .use(rehypePosition)
+    // .use(rehypeSanitize, schema)
+    .use(rehypeKatex)
     .use(rehypeCodeMirror, {
       ignoreMissing: true,
       theme: codeBlockTheme,
     })
     .use(rehypeMermaid)
+    .use(rehypeFlowChart)
     .use(rehypeReact, {
       createElement: React.createElement,
+      Fragment: React.Fragment,
       components: {
         pre: CodeFence,
-        flowchart: ({ children }: any) => {
-          return FlowChartExport(children[0])
-        },
-        chart: ({ children }: any) => {
-          return ChartExport(children[0])
-        },
-        'chart(yaml)': ({ children }: any) => {
-          return ChartExport(children[0], true)
-        },
       },
     })
     .use(rehypeStringify)
     .process(note.content)
 
-  return output.toString('utf-8').trim() + '\n'
+  // console.log('Output', outputFinal.toString('utf-8').trim() + '\n')
+  return outputFinal.toString('utf-8').trim() + '\n'
 }
 
 export const exportNoteAsMarkdownFile = async (

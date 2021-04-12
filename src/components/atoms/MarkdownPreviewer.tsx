@@ -31,6 +31,7 @@ import {
   remarkPlantUML,
 } from '../../cloud/lib/charts'
 import { rehypePosition } from '../../cloud/lib/rehypePosition'
+import rehypeStringify from 'rehype-stringify'
 
 const schema = mergeDeepRight(gh, {
   attributes: {
@@ -71,6 +72,12 @@ function isElement(node: Node | undefined, tagName: string): node is Element {
   return node.tagName === tagName
 }
 
+function getMime(name: string) {
+  const modeInfo = CodeMirror.findModeByName(name)
+  if (modeInfo == null) return null
+  return modeInfo.mime || modeInfo.mimes![0]
+}
+
 function rehypeCodeMirrorAttacher(options: Partial<RehypeCodeMirrorOptions>) {
   const settings = options || {}
   const ignoreMissing = settings.ignoreMissing || false
@@ -81,8 +88,16 @@ function rehypeCodeMirrorAttacher(options: Partial<RehypeCodeMirrorOptions>) {
 
     return tree
 
-    function visitor(node: Element, _index: number, parent?: Node) {
-      if (!isElement(parent, 'pre') || !isElement(node, 'code')) {
+    function visitor(
+      node: Element,
+      _index: number,
+      parent: Parent | undefined
+    ) {
+      if (
+        parent == null ||
+        !isElement(parent, 'pre') ||
+        !isElement(node, 'code')
+      ) {
         return
       }
 
@@ -102,44 +117,34 @@ function rehypeCodeMirrorAttacher(options: Partial<RehypeCodeMirrorOptions>) {
       }
       parent.properties.className = classNames
 
-      const rawContent = node.children[0].value as string
-      // TODO: Stop using html attribute after exposing HAST Node is shipped
-      parent.properties['data-raw'] = rawContent
-
       if (lang == null || lang === false || plainText.indexOf(lang) !== -1) {
         return
       }
 
-      const cmResult = [] as Node[]
       if (lang != null) {
-        const modeInfo = CodeMirror.findModeByName(lang)
-        if (modeInfo == null) {
-          if (ignoreMissing) {
-            return
-          }
-
+        const mime = getMime(lang)
+        if (mime != null) {
+          const rawContent = node.children[0].value as string
+          const cmResult = [] as Node[]
+          CodeMirror.runMode(rawContent, mime, (text, style) => {
+            cmResult.push(
+              h(
+                'span',
+                {
+                  className: style
+                    ? 'cm-' + style.replace(/ +/g, ' cm-')
+                    : undefined,
+                },
+                text
+              )
+            )
+          })
+          node.children = cmResult
+          return
+        } else if (!ignoreMissing) {
           throw new Error(`Unknown language: \`${lang}\` is not registered`)
         }
-        const mime = modeInfo.mime || modeInfo.mimes?.[0]
-        parent.properties['data-ext'] = modeInfo.ext?.[0]
-        parent.properties['data-mime'] = mime
-
-        CodeMirror.runMode(rawContent, mime, (text, style) => {
-          cmResult.push(
-            h(
-              'span',
-              {
-                className: style
-                  ? 'cm-' + style.replace(/ +/g, ' cm-')
-                  : undefined,
-              },
-              text
-            )
-          )
-        })
       }
-
-      node.children = cmResult
     }
 
     // Get the programming language of `node`.
@@ -261,8 +266,35 @@ const MarkdownPreviewer = ({
     },
   }
 
-  const markdownProcessor = useMemo(() => {
-    return unified()
+  const markdownProcessor = unified()
+    .use(remarkParse)
+    .use(remarkEmoji, { emoticon: false })
+    .use(remarkAbmonitions, remarkAdmonitionOptions)
+    .use(remarkMath)
+    .use(remarkPlantUML, { server: 'http://www.plantuml.com/plantuml' })
+    .use(remarkCharts)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)
+    .use(remarkSlug)
+    .use(rehypePosition)
+    .use(rehypeSanitize, schema)
+    .use(rehypeKatex)
+    .use(rehypeCodeMirror, {
+      ignoreMissing: true,
+      theme: codeBlockTheme,
+    })
+    .use(rehypeMermaid)
+    .use(rehypeReact, rehypeReactConfig)
+  // }, [remarkAdmonitionOptions, codeBlockTheme, rehypeReactConfig])
+
+  const renderContent = useCallback(async () => {
+    const content = previousContentRef.current
+    setRendering(true)
+
+    console.time('render')
+    checkboxIndexRef.current = 0
+    const result = await markdownProcessor.process(content)
+    const resultStringified = await unified()
       .use(remarkParse)
       .use(remarkEmoji, { emoticon: false })
       .use(remarkAbmonitions, remarkAdmonitionOptions)
@@ -281,20 +313,20 @@ const MarkdownPreviewer = ({
       })
       .use(rehypeMermaid)
       .use(rehypeReact, rehypeReactConfig)
-  }, [remarkAdmonitionOptions, codeBlockTheme, rehypeReactConfig])
-
-  const renderContent = useCallback(async () => {
-    const content = previousContentRef.current
-    setRendering(true)
-
-    console.time('render')
-    checkboxIndexRef.current = 0
-    const result = await markdownProcessor.process(content)
+      .use(rehypeStringify)
+      .process(content)
+    console.log('Got result rehype', (result as any).result)
+    console.log('Got result string', resultStringified)
     console.timeEnd('render')
 
     setRendering(false)
     setRenderedContent((result as any).result)
-  }, [markdownProcessor])
+  }, [
+    codeBlockTheme,
+    markdownProcessor,
+    rehypeReactConfig,
+    remarkAdmonitionOptions,
+  ])
 
   useEffect(() => {
     window.addEventListener('codemirror-mode-load', renderContent)

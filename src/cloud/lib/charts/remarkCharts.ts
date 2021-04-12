@@ -5,6 +5,8 @@ import rehypeParse from 'rehype-parse'
 import unified from 'unified'
 import { randomBytes } from 'crypto'
 
+// todo: [komediruzecki-12/04/2021] Investigate how to get this charts from this webpage
+// https://mermaid-js.github.io/mermaid/#/
 const SUPPORTED = ['flowchart', 'mermaid', 'sequence', 'chart', 'chart(yaml)']
 
 export function remarkCharts() {
@@ -13,6 +15,7 @@ export function remarkCharts() {
       if (typeof node.lang !== 'string' || !SUPPORTED.includes(node.lang)) {
         return
       }
+      console.log('Got chart', node.lang, tree)
 
       node.type = node.lang
       node.data = {
