@@ -374,6 +374,8 @@ const App = () => {
         <ToastList />
         <CodeMirrorStyle />
         <ExternalStyle />
+        <div id='flowchart-export' style={{ display: 'none' }} />
+        <canvas id='chart-export' style={{ display: 'none' }} />
       </AppContainer>
     </ThemeProvider>
   )

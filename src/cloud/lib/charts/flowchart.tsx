@@ -51,26 +51,30 @@ export function rehypeFlowChart() {
     visit(tree, { tagName: 'flowchart' }, (node: any) => {
       flowchartNodes.push(node)
     })
+    const eleRef = window.document.getElementById('flowchart-export')
+    if (eleRef == null) {
+      return
+    }
     const parser = unified().use(rehypeParse, { fragment: true })
     await Promise.all(
       flowchartNodes.map(async (node: any) => {
-        node.tagName = 'div'
+        // node.tagName = 'div'
         const value = node.children[0].value
         try {
-          console.log('Flow chart parsing', value)
           const diagram = FlowChart.parse(value)
-          const eleRef = window.document.createElement('div')
           while (eleRef.firstChild != null) {
             eleRef.removeChild(eleRef.lastChild!)
           }
 
-          diagram.drawSVG(eleRef)
+          diagram.drawSVG(eleRef, { maxWidth: 3 })
           const svg = eleRef.childNodes[0] as SVGElement
           if (svg != null && typeof svg.getAttribute('height') === 'string') {
             eleRef.style.setProperty(
               'height',
               `${svg.getAttribute('height')!}px`
             )
+            node.properties.style = `height: ${svg.getAttribute('height')!}px`
+            node.properties.className = ''
           }
           node.children = parser.parse(svg.outerHTML).children
         } catch (err) {

@@ -15,8 +15,6 @@ export function remarkCharts() {
       if (typeof node.lang !== 'string' || !SUPPORTED.includes(node.lang)) {
         return
       }
-      console.log('Got chart', node.lang, tree)
-
       node.type = node.lang
       node.data = {
         hName: node.lang,

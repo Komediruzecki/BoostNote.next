@@ -31,6 +31,7 @@ import { join } from 'path'
 import { dev } from '../electron/consts'
 import { excludeFileProtocol } from './db/utils'
 import {
+  rehypeChart,
   rehypeFlowChart,
   rehypeMermaid,
   remarkCharts,
@@ -471,6 +472,8 @@ async function convertNoteDocToMarkdownHtmlString(
     })
     .use(rehypeMermaid)
     .use(rehypeFlowChart)
+    .use(rehypeChart, { tagName: 'chart' })
+    .use(rehypeChart, { tagName: 'chart(yaml)', isYml: true })
     .use(rehypeReact, {
       createElement: React.createElement,
       Fragment: React.Fragment,
