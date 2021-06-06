@@ -26,6 +26,8 @@ export function useLocalDB() {
     unbookmarkNote,
     updateNote,
     renameFolder,
+    updateFolderOrderedIds,
+    updateWorkspaceOrderedIds,
     storageMap: workspaceMap,
   } = useDb()
   const { push } = useRouter()
@@ -176,11 +178,10 @@ export function useLocalDB() {
     [send, deleteNote]
   )
 
-  const updateFolderApi = useCallback(
+  const renameFolderApi = useCallback(
     async (target: FolderDoc, body: UpdateFolderRequestBody) => {
       await send(target._id, 'update', {
         api: () =>
-          // generic update not available, rename instead
           renameFolder(body.workspaceId, body.oldPathname, body.newPathname),
         cb: () => {
           // maybe push message to notify successfully update
@@ -188,6 +189,19 @@ export function useLocalDB() {
       })
     },
     [send, renameFolder]
+  )
+
+  const updateFolderOrderedIdsApi = useCallback(
+    async (resourceId, body: UpdateFolderOrderedIdsRequestBody) => {
+      await send(resourceId, 'update', {
+        api: () =>
+          updateFolderOrderedIds(body.workspaceId, resourceId, body.orderedIds),
+        cb: () => {
+          // maybe push message to notify successfully update
+        },
+      })
+    },
+    [send, updateFolderOrderedIds]
   )
 
   const updateDocApi = useCallback(
@@ -205,6 +219,18 @@ export function useLocalDB() {
     [send, updateNote]
   )
 
+  const updateWorkspaceOrderedIdsApi = useCallback(
+    async (resourceId, body: UpdateWorkspaceOrderedIdsRequestBody) => {
+      await send(resourceId, 'update', {
+        api: () => updateWorkspaceOrderedIds(body.workspaceId, body.orderedIds),
+        cb: () => {
+          // maybe push message to notify successfully update
+        },
+      })
+    },
+    [send, updateWorkspaceOrderedIds]
+  )
+
   return {
     sendingMap,
     createWorkspaceApi,
@@ -217,7 +243,9 @@ export function useLocalDB() {
     deleteFolderApi,
     deleteDocApi,
     updateDocApi,
-    updateFolder: updateFolderApi,
+    renameFolderApi,
+    updateFolderOrderedIdsApi,
+    updateWorkspaceOrderedIdsApi,
     workspaceMap,
   }
 }
@@ -242,6 +270,16 @@ export interface UpdateFolderRequestBody {
   workspaceId: string
   oldPathname: string
   newPathname: string
+}
+
+export interface UpdateFolderOrderedIdsRequestBody {
+  workspaceId: string
+  orderedIds: string[]
+}
+
+export interface UpdateWorkspaceOrderedIdsRequestBody {
+  workspaceId: string
+  orderedIds: string[]
 }
 
 export interface UpdateDocRequestBody {

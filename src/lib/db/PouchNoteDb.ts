@@ -121,6 +121,16 @@ export default class PouchNoteDb implements NoteDb {
     }
   }
 
+  async updateFolderOrderedIds(
+    folderId: string,
+    orderedIds: string[]
+  ): Promise<FolderDoc | undefined> {
+    console.warn(
+      'Ordered IDs not supported in PouchDB' + folderId + ' ' + orderedIds
+    )
+    return undefined
+  }
+
   async renameFolder(
     pathname: string,
     newPathname: string
@@ -700,5 +710,13 @@ export default class PouchNoteDb implements NoteDb {
       }
       return map
     }, {} as ObjectMap<Attachment>)
+  }
+
+  getWorkspaceOrderedIds(): string[] | undefined {
+    return []
+  }
+
+  updateWorkspaceOrderedIds() {
+    console.warn('Ordered Ids not supported.')
   }
 }

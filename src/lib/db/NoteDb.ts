@@ -47,4 +47,6 @@ export default interface NoteDb {
   upsertAttachments(files: File[]): Promise<Attachment[]>
   removeAttachment(fileName: string): Promise<void>
   getAttachmentMap(): Promise<ObjectMap<Attachment>>
+  getWorkspaceOrderedIds(): string[] | undefined
+  updateWorkspaceOrderedIds(orderedIds: string[]): void
 }

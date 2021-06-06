@@ -83,29 +83,33 @@ type LocalTreeItem = {
   onDrop?: (position?: SidebarDragState) => void
 }
 
-function getWorkspaceChildrenOrderedIds(
-  notes: NoteDoc[],
-  folders: FolderDoc[],
-  rootPathname = '/'
-): string[] {
-  const children: string[] = []
-  notes.forEach((note) => {
-    if (note.folderPathname == rootPathname) {
-      children.push(note._id)
-    }
-  })
-
-  folders.forEach((folder) => {
-    const folderPathname = getFolderPathname(folder._id)
-    if (folderPathname === '/') {
-      return
-    }
-    const parentFolderPathname = getParentFolderPathname(folderPathname)
-    if (parentFolderPathname === rootPathname) {
-      children.push(folder._id)
-    }
-  })
-  return children
+function getWorkspaceChildrenOrdered(
+  sortingOrder: SidebarTreeSortingOrder,
+  workspaceRows: LocalTreeItem[],
+  map: Map<string, LocalTreeItem>,
+  orderedIds?: string[]
+): LocalTreeItem[] {
+  switch (sortingOrder) {
+    case 'a-z':
+      return sortByAttributeAsc('label', workspaceRows)
+    case 'z-a':
+      return sortByAttributeDesc('label', workspaceRows)
+    case 'last-updated':
+      return sortByAttributeDesc('lastUpdated', workspaceRows)
+    case 'drag':
+    default:
+      if (orderedIds == null) {
+        return workspaceRows
+      }
+      const orderedWorkspaceRows: LocalTreeItem[] = []
+      orderedIds.forEach((orderId) => {
+        const workspaceChildItem = map.get(orderId)
+        if (workspaceChildItem != null) {
+          orderedWorkspaceRows.push(workspaceChildItem)
+        }
+      })
+      return orderedWorkspaceRows
+  }
 }
 
 function getFolderChildrenOrderedIds(
@@ -202,8 +206,8 @@ export function mapTree(
   createFolder: (body: CreateFolderRequestBody) => Promise<void>,
   createNote: (body: CreateNoteRequestBody) => Promise<void>,
   draggedResource: React.MutableRefObject<NavResource | undefined>,
-  dropInFolderOrDoc: (
-    workspaceId: string,
+  dropInDocOrFolder: (
+    workspace: NoteStorage,
     targetedResource: NavResource,
     targetedPosition: SidebarDragState
   ) => void,
@@ -312,8 +316,8 @@ export function mapTree(
       active: href === currentPathWithWorkspace,
       navigateTo: () => push(href),
       onDrop: (position: SidebarDragState) =>
-        dropInFolderOrDoc(
-          workspace.id,
+        dropInDocOrFolder(
+          workspace,
           { type: 'folder', result: folder },
           position
         ),
@@ -392,7 +396,10 @@ export function mapTree(
         },
       ],
       parentId: parentFolderId,
-      children: getFolderChildrenOrderedIds(folder, notes, folders),
+      children:
+        folder.orderedIds != null
+          ? folder.orderedIds
+          : getFolderChildrenOrderedIds(folder, notes, folders),
     })
   })
 
@@ -420,7 +427,7 @@ export function mapTree(
       dropAround: sortingOrder === 'drag',
       navigateTo: () => push(href),
       onDrop: (position: SidebarDragState) =>
-        dropInFolderOrDoc(workspace.id, { type: 'doc', result: doc }, position),
+        dropInDocOrFolder(workspace, { type: 'doc', result: doc }, position),
       onDragStart: () => {
         draggedResource.current = { type: 'doc', result: doc }
       },
@@ -468,16 +475,28 @@ export function mapTree(
     return acc
   }, [] as SidebarTreeChildRow[])
 
-  const navTree = arrayItems
-    .filter((item) => item.parentId == workspace.id)
-    .reduce((acc, val) => {
-      acc.push({
-        ...val,
-        depth: 0,
-        rows: buildChildrenNavRows(sortingOrder, val.children, 1, items),
-      })
-      return acc
-    }, [] as SidebarTreeChildRow[])
+  const workspaceRows = arrayItems.filter(
+    (item) => item.parentId == workspace.id
+  )
+  const orderedWorkspaceRows = getWorkspaceChildrenOrdered(
+    sortingOrder,
+    workspaceRows,
+    items,
+    workspace.workspaceOrderedIds
+  )
+  const navTree = orderedWorkspaceRows.reduce((acc, val) => {
+    acc.push({
+      ...val,
+      depth: 0,
+      rows: buildChildrenNavRows(sortingOrder, val.children, 1, items),
+    })
+    return acc
+  }, [] as SidebarTreeChildRow[])
+
+  // so idea is to somehow order them by workspace ids
+  // folders are already ordered based on buildChildrenNavRows
+  // update the ordered Ids in database
+  // handle initialization of ordered Ids -> should be simple (maybe best in database init)
 
   const notesPerLabelIdMap = notes.reduce((acc, note) => {
     const noteLabelNames = note.tags || []

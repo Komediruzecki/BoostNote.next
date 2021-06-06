@@ -28,6 +28,7 @@ import {
   values,
   isSubPathname,
   keys,
+  getFolderPathname,
 } from './utils'
 import { escapeRegExp, generateId, getHexatrigesimalString } from '../string'
 import {
@@ -42,6 +43,7 @@ import {
 interface StorageJSONData {
   folderMap: ObjectMap<FolderDoc>
   tagMap: ObjectMap<TagDoc>
+  workspaceOrderedIds?: string[]
 }
 
 class FSNoteDb implements NoteDb {
@@ -172,10 +174,6 @@ class FSNoteDb implements NoteDb {
     const rawContent = await readFileAsString(notePathname)
 
     return JSON.parse(rawContent)
-  }
-
-  async getNotesByFolder(folderPathname: string) {
-    folderPathname
   }
 
   async getAllDocsMap(): Promise<AllDocsMap> {
@@ -491,6 +489,30 @@ class FSNoteDb implements NoteDb {
     await this.saveBoostNoteJSON()
   }
 
+  async updateFolderOrderedIds(
+    folderId: string,
+    orderedIds: string[]
+  ): Promise<FolderDoc | undefined> {
+    const folderPathname = getFolderPathname(folderId)
+
+    const newFolderMap = this.data!.folderMap
+    const folder = newFolderMap[folderPathname]
+    if (folder == null) {
+      throw createUnprocessableEntityError(
+        `Folder resource not found, cannot update order ${folderId}`
+      )
+    }
+    newFolderMap[folderPathname] = {
+      ...folder,
+      orderedIds: orderedIds,
+    }
+
+    this.data!.folderMap = newFolderMap
+    await this.saveBoostNoteJSON()
+
+    return newFolderMap[folderPathname]
+  }
+
   async renameFolder(pathname: string, newPathname: string) {
     if (!isFolderPathnameValid(pathname)) {
       throw createUnprocessableEntityError(
@@ -628,6 +650,7 @@ class FSNoteDb implements NoteDb {
         const defaultBoostNoteJSON: StorageJSONData = {
           folderMap: {},
           tagMap: {},
+          workspaceOrderedIds: [],
         }
         this.data = defaultBoostNoteJSON
         writeFile(jsonPathname, JSON.stringify(defaultBoostNoteJSON))
@@ -684,6 +707,15 @@ class FSNoteDb implements NoteDb {
 
   appendFileProtocol(pathname: string) {
     return `file://${pathname.replace(/\\/g, '/')}`
+  }
+
+  getWorkspaceOrderedIds(): string[] | undefined {
+    return this.data!.workspaceOrderedIds
+  }
+
+  async updateWorkspaceOrderedIds(orderedIds: string[]) {
+    this.data!.workspaceOrderedIds = orderedIds
+    await this.saveBoostNoteJSON()
   }
 }
 

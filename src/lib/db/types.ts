@@ -65,6 +65,7 @@ export type FolderDoc = {
 } & FolderDocEditibleProps
 
 export type FolderDocEditibleProps = {
+  orderedIds?: string[]
   data: JsonObject
 }
 
@@ -130,4 +131,5 @@ export interface AllPopulatedDocsMap {
   tagMap: ObjectMap<PopulatedTagDoc>
   attachmentMap: ObjectMap<Attachment>
   bookmarkedItemIds: string[]
+  workspaceOrderedIds: string[]
 }

@@ -39,11 +39,11 @@ export function excludeFileProtocol(src: string) {
   return src.replace('file://', '')
 }
 
-export function prependNoteIdPrefix(noteId: string): string {
-  if (new RegExp(`^${NOTE_ID_PREFIX}`).test(noteId)) {
-    return `${NOTE_ID_PREFIX}${noteId}`
+export function prependFolderIdPrefix(folderPathname: string): string {
+  if (new RegExp(`^${FOLDER_ID_PREFIX}`).test(folderPathname)) {
+    return folderPathname
   }
-  return noteId
+  return `${FOLDER_ID_PREFIX}${folderPathname}`
 }
 
 export function getWorkspaceHref(storage: NoteStorage, query?: any): string {

@@ -22,6 +22,7 @@ import {
   getParentFolderPathname,
   getAllParentFolderPathnames,
   entries,
+  prependFolderIdPrefix,
 } from './utils'
 import { generateId } from '../string'
 import PouchDB from './PouchDB'
@@ -47,6 +48,10 @@ export interface DbStore {
   ) => Promise<NoteStorage>
   removeStorage: (id: string) => Promise<void>
   renameStorage: (id: string, name: string) => void
+  updateWorkspaceOrderedIds: (
+    storageId: string,
+    newOrderedIds: string[]
+  ) => Promise<NoteStorage | undefined>
   createFolder: (
     storageId: string,
     pathname: string
@@ -56,6 +61,11 @@ export interface DbStore {
     pathname: string,
     newName: string
   ) => Promise<void>
+  updateFolderOrderedIds: (
+    storageId: string,
+    folderId: string,
+    newOrderedIds: string[]
+  ) => Promise<FolderDoc | undefined>
   removeFolder: (storageId: string, pathname: string) => Promise<void>
   createNote(
     storageId: string,
@@ -278,6 +288,31 @@ export function createDbStoreCreator(
       [setStorageMap, storageMap]
     )
 
+    const updateWorkspaceOrderedIds = useCallback(
+      async (
+        workspaceId: string,
+        orderedIds: string[]
+      ): Promise<NoteStorage | undefined> => {
+        const storageData = storageMap[workspaceId]
+        if (storageData == null) {
+          throw new Error('Cannot find requested workspace' + workspaceId)
+        }
+
+        storageData.db.updateWorkspaceOrderedIds(orderedIds)
+
+        let newStorageMap: ObjectMap<NoteStorage> = {}
+        setStorageMap((prevStorageMap) => {
+          newStorageMap = produce(prevStorageMap, (draft) => {
+            draft[workspaceId]!.workspaceOrderedIds = orderedIds
+          })
+          return newStorageMap
+        })
+        saveStorageDataList(liteStorage, newStorageMap)
+        return storageData
+      },
+      [setStorageMap, storageMap]
+    )
+
     const createFolder = useCallback(
       async (storageId: string, pathname: string) => {
         const storage = storageMap[storageId]
@@ -305,6 +340,7 @@ export function createDbStoreCreator(
                   ...aFolder,
                   pathname: aPathname,
                   noteIdSet: new Set(),
+                  orderedIds: [], // todo:  test this
                 }
               }
             })
@@ -340,6 +376,40 @@ export function createDbStoreCreator(
             })
           })
         )
+      },
+      [storageMap, setStorageMap]
+    )
+
+    const updateFolderOrderedIds = useCallback(
+      async (workspaceId: string, resourceId: string, orderedIds: string[]) => {
+        const storage = storageMap[workspaceId]
+        if (storage == null) {
+          return
+        }
+        const folderPathname = getFolderPathname(resourceId)
+        const populatedFolderDoc = storage.folderMap[folderPathname]
+        if (populatedFolderDoc == null) {
+          throw new Error('Missing folder to update: ' + resourceId)
+        }
+        const folderDoc = await storage.db.updateFolderOrderedIds(
+          resourceId,
+          orderedIds
+        )
+
+        if (folderDoc != null) {
+          setStorageMap(
+            produce((draft: ObjectMap<NoteStorage>) => {
+              draft[storage.id]!.folderMap[populatedFolderDoc.pathname] = {
+                pathname: populatedFolderDoc.pathname,
+                noteIdSet: populatedFolderDoc.noteIdSet,
+                ...folderDoc,
+              }
+            })
+          )
+        }
+
+        console.log('Updated folder', folderDoc)
+        return folderDoc
       },
       [storageMap, setStorageMap]
     )
@@ -1114,8 +1184,10 @@ export function createDbStoreCreator(
       createStorage,
       removeStorage,
       renameStorage,
+      updateWorkspaceOrderedIds,
       createFolder,
       renameFolder,
+      updateFolderOrderedIds,
       removeFolder,
       createNote,
       updateNote,
@@ -1204,6 +1276,7 @@ async function prepareStorage(
   storageData: NoteStorageData
 ): Promise<NoteStorage> {
   const { id, name } = storageData
+  console.log('initializing storage', id, name)
   const db =
     storageData.type === 'fs'
       ? new FSNoteDb(id, name, storageData.location)
@@ -1216,17 +1289,33 @@ async function prepareStorage(
         )
   await db.init()
 
+  const previousWorkspaceIds = db.getWorkspaceOrderedIds()
+  const workspaceOrderedIds: string[] = previousWorkspaceIds || []
+  const foldersToUpdateOrderedIds: string[] = []
+
   const { noteMap, folderMap, tagMap } = await db.getAllDocsMap()
   const attachmentMap = await db.getAttachmentMap()
   const populatedFolderMap = entries(folderMap).reduce<
     ObjectMap<PopulatedFolderDoc>
   >((map, [pathname, folderDoc]) => {
+    if (folderDoc.orderedIds == null && storageData.type == 'pouch') {
+      console.log('Populating ordered IDs first time', pathname)
+      folderDoc.orderedIds = []
+      foldersToUpdateOrderedIds.push(pathname)
+    }
+
     map[pathname] = {
       ...folderDoc,
       pathname,
       noteIdSet: new Set(),
     }
 
+    if (
+      previousWorkspaceIds == null &&
+      getParentFolderPathname(pathname) == '/'
+    ) {
+      workspaceOrderedIds.push(folderDoc._id)
+    }
     return map
   }, {})
   const populatedTagMap = entries(tagMap).reduce<ObjectMap<PopulatedTagDoc>>(
@@ -1253,10 +1342,30 @@ async function prepareStorage(
     if (noteDoc.data.bookmarked) {
       bookmarkedIdSet.add(noteDoc._id)
     }
+    if (previousWorkspaceIds == null && noteDoc.folderPathname == '/') {
+      workspaceOrderedIds.push(noteDoc._id)
+    }
   }
   const bookmarkedItemIds = [...bookmarkedIdSet]
 
   if (storageData.type === 'fs') {
+    // Update folder ordereds Ids if needed
+    foldersToUpdateOrderedIds.forEach((folderPathname) => {
+      const subFoldersPathnames: string[] = db.getAllFolderUnderPathname(
+        folderPathname
+      ) as string[]
+      subFoldersPathnames.slice(1).forEach((subFolderPathname: string) => {
+        const folderId = prependFolderIdPrefix(subFolderPathname)
+        populatedFolderMap[subFolderPathname]!.orderedIds!.push(folderId)
+      })
+      populatedFolderMap[folderPathname]!.noteIdSet.forEach((noteId) => {
+        populatedFolderMap[folderPathname]!.orderedIds!.push(noteId)
+      })
+    })
+    console.log('Populated folders', populatedFolderMap, workspaceOrderedIds)
+    if (previousWorkspaceIds == null) {
+      await db.updateWorkspaceOrderedIds(workspaceOrderedIds)
+    }
     return {
       type: 'fs',
       id,
@@ -1268,6 +1377,7 @@ async function prepareStorage(
       attachmentMap,
       db: db as FSNoteDb,
       bookmarkedItemIds,
+      workspaceOrderedIds: workspaceOrderedIds,
     }
   }
 
@@ -1282,5 +1392,6 @@ async function prepareStorage(
     attachmentMap,
     db: db as PouchNoteDb,
     bookmarkedItemIds,
+    workspaceOrderedIds: [] as string[], // ignore for pouch DB
   }
 }

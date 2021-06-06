@@ -85,7 +85,7 @@ const SidebarContainer = ({
   const boostHubUserInfo = preferences['cloud.user']
   const { signOut } = useBoostHub()
   const {
-    updateFolder,
+    renameFolderApi,
     updateDocApi,
     createFolderApi,
     createDocApi,
@@ -450,7 +450,7 @@ const SidebarContainer = ({
       createDocApi,
       draggedResource,
       dropInDocOrFolder,
-      (id: string) => dropInWorkspace(id, updateFolder, updateDocApi),
+      (id: string) => dropInWorkspace(id, renameFolderApi, updateDocApi),
       openRenameFolderForm,
       openRenameDocForm,
       openWorkspaceEditForm,
@@ -480,7 +480,7 @@ const SidebarContainer = ({
     exportDocuments,
     removeWorkspace,
     dropInWorkspace,
-    updateFolder,
+    renameFolderApi,
     updateDocApi,
   ])
 
