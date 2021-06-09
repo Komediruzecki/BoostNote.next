@@ -223,7 +223,32 @@ color: ${theme.colors.text.primary};
 /* ———————————–———————————–———————————–——–——
     Table
 ———————————–———————————–———————————–——–—— */
+export const tableStyle = ({ theme }: StyledProps) => `
+  width: 100%;
+  border: 1px solid ${theme.colors.border.main};
+  border-collapse: collapse;
+  color: ${theme.colors.text.subtle};
+  text-align: left;
 
+  th, td {
+    padding: ${theme.sizes.spaces.xsm}px ${theme.sizes.spaces.sm}px;
+    border: 1px solid ${theme.colors.border.main};
+    font-weight: 400;
+  }
+
+  thead th {
+    font-size: ${theme.sizes.fonts.l}px;
+    font-weight: 500;
+
+    span {
+      display: block;
+    }
+  }
+
+  tbody td {
+    text-align: center;
+  }
+`
 /* ———————————–———————————–———————————–——–——
     Responsive Styles
 ———————————–———————————–———————————–——–—— */

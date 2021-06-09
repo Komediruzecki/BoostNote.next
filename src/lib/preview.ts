@@ -261,6 +261,7 @@ table {
   display: block;
   overflow: auto;
   width: 100%;
+  color: #222;
 }
 
 table th {
